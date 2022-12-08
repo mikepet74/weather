@@ -1,6 +1,5 @@
-﻿  Source.c
-C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Source.c(313,35): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Source.c(343,14): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Source.c(383,27): warning C4098: 'printToFile': 'void' function returning a value
-C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Source.c(285,24): warning C4101: 'apiKey': unreferenced local variable
+﻿  Func.c
+C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Func.c(184,35): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Func.c(214,14): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Func.c(156,24): warning C4101: 'apiKey': unreferenced local variable
   Project3.vcxproj -> C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\x64\Debug\Project3.exe
