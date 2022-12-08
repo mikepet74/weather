@@ -1,0 +1,5 @@
+﻿  Source.c
+C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Source.c(124,9): warning C4101: 'm': unreferenced local variable
+C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Source.c(123,6): warning C4101: 'customerIndexExists': unreferenced local variable
+C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\Project3\Source.c(123,43): warning C4101: 'i': unreferenced local variable
+  Project3.vcxproj -> C:\Users\user1\Desktop\c\לשתף עצמינו\Project3\x64\Debug\Project3.exe

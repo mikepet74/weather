@@ -1,0 +1,11 @@
+country,state,city,zip code, temp, wind_speed, clouds
+Wales, ,Cardiff,CF14,-1,1.54,"broken clouds",
+IL, ,Tel Aviv,,19.69,1.54,"clear sky",
+u.s.a,Northern Mariana Islands,Saipan,96950,34.38,4.47,"clear sky",
+Cuba, ,Havana,32333,19.52,3.6,"few clouds",
+France,Mayotte,Acoua,,35.4,2.4,"light rain",
+England, ,London,181372,-5.39,3.09,"clear sky",
+Ecuador,Pichincha,Quito,170109,7.53,0.57,"light rain",
+Burkina Faso,Kadiogo,Ouagadougou,,23.45,1.54,"dust",
+GB, ,London,NW1 3BT,-5.39,3.09,"clear sky",
+US,FL,Miami,,22.2,2.06,"few clouds",
