@@ -6,6 +6,8 @@
 
 #include "curl/curl.h"
 
+#define CHUNK 10
+
 #ifdef _DEBUG
 #pragma comment (lib, "curl/libcurl_a_debug.lib")
 #else
@@ -25,6 +27,7 @@ struct MemoryStruct {
 };
 
 static size_t
+
 WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp)
 {
     size_t realsize = size * nmemb;
@@ -45,238 +48,13 @@ WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp)
     return realsize;
 }
 
-#define CHUNK 10
-char* readLine(FILE* read)
-{
-	char* input = NULL, * tempInput;
-	char tempbuf[CHUNK] = { '\0' };
-	int inputLength = 0, tempLength = 0;
+char* readLine(FILE* read);
+FILE* openFile(FILE* filePointer, char* readingOrWriting);
+char* returnAPI(char* city);
+char* serverRequest(char* city);
+void printToFile(FILE* filePointerReading, FILE* filePointerWriting);
 
-	do
-	{
-		fgets(tempbuf, CHUNK, read);//Size ten absorption
-		tempLength = (int)strlen(tempbuf);//Checking how much was absorbed
-
-		if ((tempInput = (char*)realloc(input, inputLength + tempLength + 1)) == NULL)//Increasing the main string by the received beat
-		{
-			return input;
-		}
-		input = tempInput;
-
-		strcpy(input + inputLength, tempbuf);//String concatenation
-		inputLength += tempLength;//A summary of everything that has been absorbed so far
-
-	} while (tempLength == CHUNK - 1 && tempbuf[CHUNK - 2] != '\n');
-
-	if (input[strlen(input) - 1] == '\n')
-	{
-		input[strlen(input) - 1] = '\0';
-	}
-	else
-	{
-		input[strlen(input)] = '\0';
-	}
-
-	return input;
-}
-
-FILE* openFile(FILE* filePointer)
-{
-	int CheckingAllocatedDynamicMemory = 0;
-	printf("Enter name of file: ");
-	char* nameOfFile = readLine(stdin);
-	FILE* read = stdin;
-	do
-	{
-		if ((filePointer = fopen(nameOfFile, "rt")) == NULL)//Checking if the opening failed
-		{
-			if (CheckingAllocatedDynamicMemory)
-			{
-				free(nameOfFile);
-			}
-
-			puts("The file for reading is not opened");
-			fputs("Enter a file name to read: ", stdout);
-
-			while ((nameOfFile = readLine(read)) == NULL)//A loop to receive another file name
-			{
-				printf("try again\n");
-			}
-
-			CheckingAllocatedDynamicMemory = 1;
-		}
-	} while (filePointer == NULL);
-
-	if (CheckingAllocatedDynamicMemory)
-	{
-		free(nameOfFile);
-	}
-
-	return filePointer;//returning the pointer
-}
-
-
-FILE* readingFile(FILE * filePointer)
-{
-	char* lineFromFile = NULL;
-	char endOfFileCheck;
-	int customerIndexExists, lineNumber = 0, i;
-	int j, m;
-	char* city;
-	char* temp;
-	if ((lineFromFile = readLine(filePointer)) == NULL)
-	{
-		printf("The system failed to read line %d from the file", lineNumber);
-	}
-	printf("%s\n", lineFromFile);
-
-	FILE* output_file;
-	output_file = fopen("output.csv", "w");
-	fprintf(output_file, lineFromFile);
-	fprintf(output_file, ", temp, wind_speed, clouds\n");
-	//fclose(output_file);
-
-	while ((endOfFileCheck = getc(filePointer)) != EOF)//A loop that ran until the end of the file
-	{
-		fseek(filePointer, -1, SEEK_CUR);
-
-		if ((lineFromFile = readLine(filePointer)) == NULL)
-		{
-			printf("The system failed to read line %d from the file", lineNumber);
-			continue;
-		}
-		int i = 0;
-		char* str = lineFromFile;
-		while (lineFromFile[i] != '\0' && lineFromFile[i + 1] != '\0')
-		{
-			if (lineFromFile[i] == ',' && lineFromFile[i + 1] == ',') {
-				str = realloc(str, strlen(lineFromFile) + 1);
-				for (j = 0;j <= i;j++) {
-					str[j] = lineFromFile[j];
-				}
-				str[j] = ' ';
-				j++;
-				for (;j <= strlen(lineFromFile) + 2;j++) {
-					str[j] = lineFromFile[j - 1];					}
-				}
-				i++;
-			}
-		str = strtok(str, ",");
-		fprintf(output_file, str);
-		fprintf(output_file, ",");
-		str = strtok(NULL, ",");
-		fprintf(output_file, str);
-		fprintf(output_file, ",");
-		str = strtok(NULL, ",");
-		fprintf(output_file, str);
-		fprintf(output_file, ",");
-		city = _strdup(str); 
-		str = strtok(NULL, ",");
-		if(str)
-			fprintf(output_file, str);
-		fprintf(output_file, ",");
-
-
-		CURL* curl_handle;
-		CURLcode res;
-
-		for (j = 0;j < strlen(city);j++) {
-			if (city[j] == ' ')
-				city[j] = '-';
-		}
-		char* startAPIKey = _strdup("https://api.openweathermap.org/data/2.5/weather?q=");
-		char* endAPIKey = _strdup("&appid=ea07a0dbcc7ad44e8e032453194681b4&units=metric");
-		char* apiKey = _strdup(startAPIKey);
-		apiKey = realloc(apiKey, strlen(apiKey) + strlen(city) + 1);
-		apiKey = strcat(apiKey, city);
-		apiKey = realloc(apiKey, strlen(apiKey) + strlen(endAPIKey) + 1);
-		apiKey = strcat(apiKey, endAPIKey);
-
-		struct MemoryStruct chunk;
-
-		chunk.memory = malloc(1);  /* will be grown as needed by the realloc above */
-		chunk.size = 0;    /* no data at this point */
-
-		curl_global_init(CURL_GLOBAL_ALL);
-
-		/* init the curl session */
-		curl_handle = curl_easy_init();
-
-		/* specify URL to get */
-		curl_easy_setopt(curl_handle, CURLOPT_URL, apiKey);
-
-		/* send all data to this function  */
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-
-		/* we pass our 'chunk' struct to the callback function */
-		curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void*)&chunk);
-
-		/* some servers do not like requests that are made without a user-agent
-		   field, so we provide one */
-		curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-
-		/* get it! */
-		res = curl_easy_perform(curl_handle);
-
-		/* check for errors */
-		if (res != CURLE_OK) {
-			fprintf(stderr, "curl_easy_perform() failed: %s\n",
-				curl_easy_strerror(res));
-		}
-		else {
-			/*
-			 * Now, our chunk.memory points to a memory block that is chunk.size
-			 * bytes big and contains the remote file.
-			 *
-			 * Do something nice with it!
-			 */
-
-			printf("%s bytes retrieved\n", chunk.memory);
-		}
-
-		/* cleanup curl stuff */
-		curl_easy_cleanup(curl_handle);
-
-		//free(chunk.memory);
-
-		/* we are done with libcurl, so clean it up */
-		curl_global_cleanup();
-
-
-
-
-		temp = _strdup(chunk.memory);
-		temp = strstr(temp, "\"temp\":");
-		temp = strstr(temp, ":");
-		temp = strtok(temp, ":");
-		temp = strtok(NULL, ",");
-
-		fprintf(output_file, temp);
-		fprintf(output_file, ",");
-
-
-		temp = _strdup(chunk.memory);
-		temp = strstr(temp, "\"wind\":");
-		temp = strstr(temp, "\"speed\"");
-		temp = strtok(temp, ":");
-		temp = strtok(NULL, ",");
-
-		fprintf(output_file, temp);
-		fprintf(output_file, ",");
-
-		temp = _strdup(chunk.memory);
-		temp = strstr(temp, "\"description\":");
-		temp = strtok(temp, ":");
-		temp = strtok(NULL, ",");
-		
-		fprintf(output_file, temp);
-		fprintf(output_file, ",\n");
- 		//fclose(output_file);
-	}
-	return output_file;
-}
-
-int main(void)
+int main()
 {
 
  //   CURL* curl_handle;
@@ -341,9 +119,266 @@ int main(void)
 
  //   /* we are done with libcurl, so clean it up */
  //   curl_global_cleanup();
-	FILE* fpr = NULL;
-	fpr = openFile(fpr);
-	fclose(readingFile(fpr));
+	FILE* fpr = NULL, *fpw=NULL;
+	fpr = openFile(fpr, "rt");
+	fpw = openFile(fpw, "w");
+	//readingFile(fpr);
+	printToFile(fpr, fpw);
+	fclose(fpr);
 	
     return 0;
+}
+
+char* readLine(FILE* read)
+{
+	char* input = NULL, * tempInput;
+	char tempbuf[CHUNK] = { '\0' };
+	int inputLength = 0, tempLength = 0;
+
+	do
+	{
+		fgets(tempbuf, CHUNK, read);//Size ten absorption
+		tempLength = (int)strlen(tempbuf);//Checking how much was absorbed
+
+		if ((tempInput = (char*)realloc(input, inputLength + tempLength + 1)) == NULL)//Increasing the main string by the received beat
+		{
+			return input;
+		}
+		input = tempInput;
+
+		strcpy(input + inputLength, tempbuf);//String concatenation
+		inputLength += tempLength;//A summary of everything that has been absorbed so far
+
+	} while (tempLength == CHUNK - 1 && tempbuf[CHUNK - 2] != '\n');
+
+	if (input[strlen(input) - 1] == '\n')
+	{
+		input[strlen(input) - 1] = '\0';
+	}
+	else
+	{
+		input[strlen(input)] = '\0';
+	}
+
+	return input;
+}
+
+FILE* openFile(FILE* filePointer, char* readingOrWriting)
+{
+	static int numOfFile = 0;
+	int CheckingAllocatedDynamicMemory = 0;
+	if (numOfFile == 0)
+	{
+		fputs("Enter a file name to read: ", stdout);
+	}
+	else if (numOfFile == 1)
+	{
+		fputs("Enter a file name to write: ", stdout);
+	}
+	char* nameOfFile = readLine(stdin);
+	FILE* read = stdin;
+	do
+	{
+		if ((filePointer = fopen(nameOfFile, readingOrWriting)) == NULL)//Checking if the opening failed
+		{
+			if (CheckingAllocatedDynamicMemory)
+			{
+				free(nameOfFile);
+			}
+
+			puts("The file for reading is not opened");
+			fputs("Enter a file name to read: ", stdout);
+
+			while ((nameOfFile = readLine(read)) == NULL)//A loop to receive another file name
+			{
+				printf("try again\n");
+			}
+
+			CheckingAllocatedDynamicMemory = 1;
+		}
+	} while (filePointer == NULL);
+
+	if (CheckingAllocatedDynamicMemory)
+	{
+		free(nameOfFile);
+	}
+	numOfFile++;
+	return filePointer;//returning the pointer
+}
+
+char* returnAPI(char* city)
+{
+	char* startAPIKey = _strdup("https://api.openweathermap.org/data/2.5/weather?q=");
+	char* endAPIKey = "&appid=ea07a0dbcc7ad44e8e032453194681b4&units=metric";
+	char* apiKey = NULL;
+	apiKey = (char*)realloc(startAPIKey, strlen(startAPIKey) + strlen(city) + 1 + strlen(endAPIKey) + 1);
+
+	apiKey = strcat(apiKey, city);
+	apiKey = strcat(apiKey, endAPIKey);
+
+	return apiKey;
+}
+
+char* serverRequest(char* city)
+{
+	CURL* curl_handle;
+	CURLcode res;
+	char* apiKey = returnAPI(city);
+
+	struct MemoryStruct chunk;
+
+	chunk.memory = (char*)malloc(sizeof(char));  /* will be grown as needed by the realloc above */
+	chunk.size = 0;    /* no data at this point */
+
+	curl_global_init(CURL_GLOBAL_ALL);
+
+	/* init the curl session */
+	curl_handle = curl_easy_init();
+
+	/* specify URL to get */
+	curl_easy_setopt(curl_handle, CURLOPT_URL, apiKey);
+
+	/* send all data to this function  */
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+
+	/* we pass our 'chunk' struct to the callback function */
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void*)&chunk);
+
+	/* some servers do not like requests that are made without a user-agent
+	   field, so we provide one */
+	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+
+	/* get it! */
+	res = curl_easy_perform(curl_handle);
+
+	/* check for errors */
+	if (res != CURLE_OK) {
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+			curl_easy_strerror(res));
+	}
+	else {
+		/*
+		 * Now, our chunk.memory points to a memory block that is chunk.size
+		 * bytes big and contains the remote file.
+		 *
+		 * Do something nice with it!
+		 */
+
+		printf("%s bytes retrieved\n", chunk.memory);
+	}
+
+	/* cleanup curl stuff */
+	curl_easy_cleanup(curl_handle);
+
+	//free(chunk.memory);
+
+	/* we are done with libcurl, so clean it up */
+	curl_global_cleanup();
+	return chunk.memory;
+}
+
+void printToFile(FILE* filePointerReading, FILE* filePointerWriting)
+{
+	char* lineFromFile = NULL;
+	char endOfFileCheck;
+	int i, j, k, lineNumber = 1;
+	char* city, * temp, * apiKey, * data;
+	if ((lineFromFile = readLine(filePointerReading)) == NULL)
+	{
+		printf("The system failed to read line %d from the file", lineNumber);
+	}
+
+	//Print title
+	fprintf(filePointerWriting, lineFromFile);
+	fprintf(filePointerWriting, ",temp,wind_speed,clouds\n");
+
+
+	while ((endOfFileCheck = getc(filePointerReading)) != EOF)//A loop that ran until the end of the file
+	{
+		i = 0;
+		fseek(filePointerReading, -1, SEEK_CUR);
+
+		if ((lineFromFile = readLine(filePointerReading)) == NULL)
+		{
+			printf("The system failed to read line %d from the file", lineNumber);
+			continue;
+		}
+
+		//char* str = lineFromFile;
+		while (lineFromFile[i] != '\0' && lineFromFile[i + 1] != '\0')
+		{
+			if (lineFromFile[i] == ',' && lineFromFile[i + 1] == ',')
+			{
+				lineFromFile = (char*)realloc(lineFromFile, strlen(lineFromFile) + 1);
+				for (j = strlen(lineFromFile) + 1;j > i;j--)
+				{
+					lineFromFile[j + 1] = lineFromFile[j];
+				}
+				lineFromFile[i + 1] = ' ';
+			}
+			i++;
+		}
+
+		lineFromFile = strtok(lineFromFile, ",");
+		fprintf(filePointerWriting, lineFromFile);
+		fprintf(filePointerWriting, ",");
+		lineFromFile = strtok(NULL, ",");
+		fprintf(filePointerWriting, lineFromFile);
+		fprintf(filePointerWriting, ",");
+		lineFromFile = strtok(NULL, ",");
+		fprintf(filePointerWriting, lineFromFile);
+		fprintf(filePointerWriting, ",");
+		city = _strdup(lineFromFile);
+		lineFromFile = strtok(NULL, ",");
+		if (lineFromFile)
+		{
+			fprintf(filePointerWriting, lineFromFile);
+		}
+		fprintf(filePointerWriting, ",");
+
+		for (j = 0;j < strlen(city);j++) {
+			if (city[j] == ' ')
+			{
+				city = (char*)realloc(city, strlen(city) + 3);
+				for (k = strlen(city);k >= j;k--) {
+					city[k + 2] = city[k];
+				}
+				city[j] = '%';
+				j++;
+				city[j] = '2';
+				j++;
+				city[j] = '0';
+			}
+		}
+
+		data = serverRequest(city);
+
+		temp = _strdup(data);
+		temp = strstr(temp, "\"temp\":");
+		temp = strstr(temp, ":");
+		temp = strtok(temp, ":");
+		temp = strtok(NULL, ",");
+
+		fprintf(filePointerWriting, temp);
+		fprintf(filePointerWriting, ",");
+
+		temp = _strdup(data);
+		temp = strstr(temp, "\"wind\":");
+		temp = strstr(temp, "\"speed\"");
+		temp = strtok(temp, ":");
+		temp = strtok(NULL, ",");
+
+		fprintf(filePointerWriting, temp);
+		fprintf(filePointerWriting, ",");
+
+		temp = _strdup(data);
+		temp = strstr(temp, "\"description\":");
+		temp = strtok(temp, ":");
+		temp = strtok(NULL, ",");
+
+		fprintf(filePointerWriting, temp);
+		fprintf(filePointerWriting, ",\n");
+
+	}
+	return filePointerWriting;
 }
